@@ -1,0 +1,104 @@
+services:
+  node-red:
+    stdin_open: true
+    tty: true
+    ports:
+      - 1880:1880
+    volumes:
+      - myNodeREDdata:/data
+    container_name: mynodered
+    image: nodered/node-red
+    restart: unless-stopped
+    networks:
+      - m2m_net
+  influxdb:
+    container_name: influxdb2
+    ports:
+      - 8086:8086
+    volumes:
+      - type: volume
+        source: influxdb2-data
+        target: /var/lib/influxdb2
+      - type: volume
+        source: influxdb2-config
+        target: /etc/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=Pallavolo.2
+      - DOCKER_INFLUXDB_INIT_ORG=UNIPG
+      - DOCKER_INFLUXDB_INIT_BUCKET=M2M_Bucket
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=tokentokentoken
+    image: influxdb:2.8.0
+    restart: unless-stopped
+    networks:
+      - m2m_net
+  emqx:
+    container_name: emqx
+    hostname: node.emqx.com
+    environment:
+      - EMQX_NODE_NAME=emqx@node.emqx.com
+    ports:
+      - 1883:1883
+      - 8083:8083
+      - 8084:8084
+      - 8883:8883
+      - 18083:18083
+    volumes:
+      - emqx-data:/opt/emqx/data
+      - emqx-log:/opt/emqx/log
+    image: emqx/emqx:latest
+    restart: unless-stopped
+    networks:
+      - m2m_net
+  grafana:
+    ports:
+      - 3000:3000
+    container_name: grafana
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    image: grafana/grafana
+    restart: unless-stopped
+    networks:
+      - m2m_net
+volumes:
+  myNodeREDdata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/Node-RED
+  influxdb2-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/InfluxDB/data
+  influxdb2-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/InfluxDB/config
+  emqx-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/EMQX/data
+  emqx-log:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/EMQX/log
+  grafana-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/dfiumicelli/M2M_Project/Grafana
+networks:
+  m2m_net: 
+    name: m2m_net
+    driver: bridge

@@ -1,0 +1,439 @@
+[
+    {
+        "id": "ad1a57699d3b0f06",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "f107778076b08227",
+        "type": "influxdb out",
+        "z": "ad1a57699d3b0f06",
+        "influxdb": "d1075c6db826ba3f",
+        "name": "influxDB temp",
+        "measurement": "temp_esp32",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "UNIPG",
+        "bucket": "M2M_Bucket",
+        "x": 760,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "55ceeaea1f364ace",
+        "type": "debug",
+        "z": "ad1a57699d3b0f06",
+        "name": "debug temperatura",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 770,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "616cbeea0cae4f27",
+        "type": "mqtt in",
+        "z": "ad1a57699d3b0f06",
+        "name": "Temperatura MQTT",
+        "topic": "casa/stanza/temperatura",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "bb1eedfaf39af120",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 180,
+        "y": 340,
+        "wires": [
+            [
+                "55ceeaea1f364ace",
+                "f107778076b08227",
+                "e715e3d873f7dbba"
+            ]
+        ]
+    },
+    {
+        "id": "69b3387614a00ddb",
+        "type": "http in",
+        "z": "ad1a57699d3b0f06",
+        "name": "GET threshold app",
+        "url": "/threshold-app",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 100,
+        "wires": [
+            [
+                "b27e78d6953dd159"
+            ]
+        ]
+    },
+    {
+        "id": "b27e78d6953dd159",
+        "type": "template",
+        "z": "ad1a57699d3b0f06",
+        "name": "HTML threshold app",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<!doctype html>\n<html lang=\"it\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Soglia temperatura</title>\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      background: #f4f6f8;\n      display: grid;\n      place-items: center;\n      height: 100vh;\n      margin: 0;\n    }\n    .card {\n      width: 340px;\n      background: white;\n      padding: 24px;\n      border-radius: 12px;\n      box-shadow: 0 8px 24px rgba(0,0,0,.08);\n    }\n    input, button {\n      width: 100%;\n      padding: 12px;\n      margin-top: 12px;\n      box-sizing: border-box;\n    }\n    button {\n      cursor: pointer;\n      background: #2563eb;\n      color: white;\n      border: 0;\n      border-radius: 8px;\n    }\n    #status {\n      margin-top: 12px;\n      color: #111827;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">\n    <h2>Soglia temperatura</h2>\n    <input id=\"threshold\" type=\"number\" step=\"0.1\" placeholder=\"Es. 27.5\" />\n    <button id=\"saveBtn\">Salva</button>\n    <div id=\"status\"></div>\n  </div>\n\n  <script>\n    const btn = document.getElementById('saveBtn');\n    const input = document.getElementById('threshold');\n    const status = document.getElementById('status');\n\n    btn.addEventListener('click', async () => {\n      const value = input.valueAsNumber;\n\n      if (!Number.isFinite(value)) {\n        status.textContent = 'Inserisci un numero valido';\n        return;\n      }\n\n      status.textContent = 'Salvataggio in corso...';\n\n      try {\n        const res = await fetch('/api/threshold', {\n          method: 'POST',\n          headers: { 'Content-Type': 'application/json' },\n          body: JSON.stringify({ threshold: value })\n        });\n\n        const data = await res.json();\n\n        if (!res.ok) {\n          status.textContent = data.error || 'Errore';\n          return;\n        }\n\n        status.textContent = `Salvato: ${data.threshold} °C`;\n      } catch (err) {\n        status.textContent = 'Errore di rete';\n      }\n    });\n  </script>\n</body>\n</html>",
+        "output": "str",
+        "x": 410,
+        "y": 100,
+        "wires": [
+            [
+                "68a7ec177d5fb2ae"
+            ]
+        ]
+    },
+    {
+        "id": "68a7ec177d5fb2ae",
+        "type": "http response",
+        "z": "ad1a57699d3b0f06",
+        "name": "HTTP response page",
+        "statusCode": "",
+        "headers": {
+            "Content-Type": "text/html; charset=utf-8"
+        },
+        "x": 670,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "95f4fb224d2bf49c",
+        "type": "http in",
+        "z": "ad1a57699d3b0f06",
+        "name": "POST threshold",
+        "url": "/api/threshold",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 180,
+        "wires": [
+            [
+                "6aa10cdabcc3eb61"
+            ]
+        ]
+    },
+    {
+        "id": "6aa10cdabcc3eb61",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "validate threshold",
+        "func": "let raw = msg.payload ? msg.payload.threshold : undefined;\n\nif (raw === undefined || raw === null || raw === \"\") {\n    const errMsg = {\n        ...msg,\n        statusCode: 400,\n        headers: { \"Content-Type\": \"application/json\" },\n        payload: { ok: false, error: \"Inserisci un numero valido\" }\n    };\n    return [null, null, errMsg];\n}\n\nif (typeof raw === \"string\") {\n    raw = raw.trim();\n    if (raw === \"\") {\n        const errMsg = {\n            ...msg,\n            statusCode: 400,\n            headers: { \"Content-Type\": \"application/json\" },\n            payload: { ok: false, error: \"Inserisci un numero valido\" }\n        };\n        return [null, null, errMsg];\n    }\n}\n\nconst value = Number(raw);\n\nif (!Number.isFinite(value)) {\n    const errMsg = {\n        ...msg,\n        statusCode: 400,\n        headers: { \"Content-Type\": \"application/json\" },\n        payload: { ok: false, error: \"Inserisci un numero valido\" }\n    };\n    return [null, null, errMsg];\n}\n\nconst dbMsg = {\n    ...msg,\n    threshold: value,\n    payload: { threshold: value }\n};\n\nconst okMsg = {\n    ...msg,\n    threshold: value,\n    statusCode: 200,\n    headers: { \"Content-Type\": \"application/json\" },\n    payload: { ok: true, threshold: value }\n};\n\nreturn [dbMsg, okMsg, null];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 180,
+        "wires": [
+            [
+                "42a9bd0f06ffe420",
+                "61c3c98047776e9f"
+            ],
+            [
+                "7c9c9a61569cfd61"
+            ],
+            [
+                "7c9c9a61569cfd61"
+            ]
+        ]
+    },
+    {
+        "id": "42a9bd0f06ffe420",
+        "type": "influxdb out",
+        "z": "ad1a57699d3b0f06",
+        "influxdb": "d1075c6db826ba3f",
+        "name": "influxDB threshold",
+        "measurement": "temperature_threshold",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "UNIPG",
+        "bucket": "M2M_Bucket",
+        "x": 720,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "61c3c98047776e9f",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "Store threshold in flow",
+        "func": "const soglia = Number(msg.threshold ?? msg.payload?.threshold ?? msg.payload);\nif (!Number.isFinite(soglia)) return null;\nflow.set('threshold', soglia);\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7c9c9a61569cfd61",
+        "type": "http response",
+        "z": "ad1a57699d3b0f06",
+        "name": "HTTP response API",
+        "statusCode": "",
+        "headers": {},
+        "x": 710,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "e715e3d873f7dbba",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "Valuta switch live",
+        "func": "const temp = Number(msg.payload.temperature);\nif (!Number.isFinite(temp)) {\n    node.status({ fill: 'red', shape: 'ring', text: 'temperature non valida' });\n    return null;\n}\n\nconst soglia = Number(flow.get('threshold'));\nif (!Number.isFinite(soglia)) {\n    node.status({ fill: 'yellow', shape: 'ring', text: 'soglia non impostata' });\n    return null;\n}\n\nconst switchCount = Number(flow.get('switchCount') || 5);\nif (!Number.isFinite(switchCount) || switchCount < 1) {\n    node.status({ fill: 'yellow', shape: 'ring', text: 'switchCount non valido' });\n    return null;\n}\n\nlet stato = String(flow.get('tasmotaState') || 'UNKNOWN').toUpperCase();\nlet sopra = context.get('sopraCount') || 0;\nlet sotto = context.get('sottoCount') || 0;\n\nflow.set('ultimaTemperatura', temp);\nflow.set('ultimaSoglia', soglia);\nflow.set('ultimoSwitchCount', switchCount);\n\nif (temp > soglia) {\n    sopra += 1;\n    sotto = 0;\n} else if (temp < soglia) {\n    sotto += 1;\n    sopra = 0;\n} else {\n    return null;\n}\n\ncontext.set('sopraCount', sopra);\ncontext.set('sottoCount', sotto);\n\nnode.status({\n    fill: temp > soglia ? 'red' : 'blue',\n    shape: 'dot',\n    text: `T=${temp} S=${soglia} su=${sopra} giu=${sotto} n=${switchCount} stato=${stato}`\n});\n\nif (sopra >= switchCount && stato !== 'ON') {\n    flow.set('tasmotaState', 'ON');\n    context.set('sopraCount', 0);\n    return {\n        topic: 'cmnd/pdc/POWER',\n        payload: 'ON'\n    };\n}\n\nif (sotto >= switchCount && stato !== 'OFF') {\n    flow.set('tasmotaState', 'OFF');\n    context.set('sottoCount', 0);\n    return {\n        topic: 'cmnd/pdc/POWER',\n        payload: 'OFF'\n    };\n}\n\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 480,
+        "wires": [
+            [
+                "157af9c5e4934456",
+                "5fc13d27497c688a"
+            ]
+        ]
+    },
+    {
+        "id": "157af9c5e4934456",
+        "type": "mqtt out",
+        "z": "ad1a57699d3b0f06",
+        "name": "Comando Tasmota",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "bb1eedfaf39af120",
+        "x": 760,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "6c11b08868ef40bf",
+        "type": "mqtt in",
+        "z": "ad1a57699d3b0f06",
+        "name": "Stato Tasmota",
+        "topic": "stat/pdc/POWER",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "bb1eedfaf39af120",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 620,
+        "wires": [
+            [
+                "e6400ac6beb7acb9",
+                "561bf7f3ea055d4f"
+            ]
+        ]
+    },
+    {
+        "id": "e6400ac6beb7acb9",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "Sync stato",
+        "func": "const stato = String(msg.payload || '').trim().toUpperCase();\nif (stato === 'ON' || stato === 'OFF') {\n    flow.set('tasmotaState', stato);\n    node.status({fill:'green',shape:'dot',text:stato});\n}\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "561bf7f3ea055d4f",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "Tasmota state -> Influx",
+        "func": "const stato = String(msg.payload || '').trim().toUpperCase();\nif (stato !== 'ON' && stato !== 'OFF') return null;\n\nconst last = context.get('lastLoggedState');\nif (last === stato) return null;\ncontext.set('lastLoggedState', stato);\n\nmsg.payload = {\n    'on/off': stato === 'ON' ? 1 : 0\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 680,
+        "wires": [
+            [
+                "b173d8a76f421d2b"
+            ]
+        ]
+    },
+    {
+        "id": "b173d8a76f421d2b",
+        "type": "influxdb out",
+        "z": "ad1a57699d3b0f06",
+        "influxdb": "d1075c6db826ba3f",
+        "name": "influxDB pdc state",
+        "measurement": "pdc",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "UNIPG",
+        "bucket": "M2M_Bucket",
+        "x": 700,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "3b5df6e1f9c9444a",
+        "type": "inject",
+        "z": "ad1a57699d3b0f06",
+        "name": "Set switchCount",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "5",
+        "payloadType": "num",
+        "x": 160,
+        "y": 740,
+        "wires": [
+            [
+                "a741f19ca2e54eb5"
+            ]
+        ]
+    },
+    {
+        "id": "a741f19ca2e54eb5",
+        "type": "function",
+        "z": "ad1a57699d3b0f06",
+        "name": "Store switchCount",
+        "func": "const n = Number(msg.payload);\nif (!Number.isFinite(n) || n < 1) return null;\nflow.set('switchCount', Math.floor(n));\nnode.status({fill:'yellow',shape:'dot',text:'switchCount=' + Math.floor(n)});\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5fc13d27497c688a",
+        "type": "debug",
+        "z": "ad1a57699d3b0f06",
+        "name": "debug comando",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "d1075c6db826ba3f",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "InfluxDB2",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://influxdb:8086",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "bb1eedfaf39af120",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "emqx",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "2b6d963e7859deb7",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-influxdb": "0.7.0"
+        }
+    }
+]
